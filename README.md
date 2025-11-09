@@ -1,7 +1,5 @@
 # 🚀 Riverwood AI Voice Agent – "Rahul"
 
-### 🎥 Challenge Submission
-Watch the full demo here 👉 [Loom Video](https://www.loom.com/share/3d5d186e50814daca79c52727c655587)
 
 ---
 
