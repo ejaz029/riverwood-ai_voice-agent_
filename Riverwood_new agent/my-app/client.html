@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rahul - Voice Agent</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 400px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        .status.connecting {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        #audioContainer {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ Rahul - Voice Agent</h1>
+        <p>Click the button below to start talking with Rahul</p>
+        <button id="connectBtn" onclick="connectToAgent()">Connect & Talk</button>
+        <div id="status"></div>
+        <div id="audioContainer"></div>
+    </div>
+
+    <script src="https://unpkg.com/livekit-client/dist/livekit-client.umd.min.js"></script>
+    <script>
+        const LIVEKIT_URL = "wss://ai-voice-agent-rwb2wm71.livekit.cloud";
+        
+        let room = null;
+        let connected = false;
+
+        async function connectToAgent() {
+            const btn = document.getElementById('connectBtn');
+            const statusDiv = document.getElementById('status');
+            
+            if (connected) {
+                // Disconnect
+                if (room) {
+                    room.disconnect();
+                    room = null;
+                }
+                connected = false;
+                btn.textContent = 'Connect & Talk';
+                statusDiv.innerHTML = '';
+                return;
+            }
+
+            try {
+                btn.disabled = true;
+                statusDiv.className = 'status connecting';
+                statusDiv.textContent = '🔄 Connecting to Rahul...';
+
+                // Get a token from your server
+                // For now, we'll use the LiveKit API to generate a token
+                const token = await getToken();
+
+                // Create room
+                room = new LivekitClient.Room({
+                    adaptiveStream: true,
+                    dynacast: true,
+                });
+
+                // Set up event listeners
+                room.on(LivekitClient.RoomEvent.TrackSubscribed, handleTrackSubscribed);
+                room.on(LivekitClient.RoomEvent.Disconnected, handleDisconnect);
+                room.on(LivekitClient.RoomEvent.ParticipantConnected, (participant) => {
+                    console.log('Participant connected:', participant.identity);
+                    if (participant.identity.includes('agent')) {
+                        statusDiv.className = 'status connected';
+                        statusDiv.textContent = '✅ Connected! Rahul is listening...';
+                    }
+                });
+
+                // Connect to room
+                await room.connect(LIVEKIT_URL, token);
+                console.log('Connected to room:', room.name);
+
+                // Enable microphone
+                await room.localParticipant.setMicrophoneEnabled(true);
+                
+                connected = true;
+                btn.disabled = false;
+                btn.textContent = 'Disconnect';
+                
+                statusDiv.className = 'status connected';
+                statusDiv.textContent = '✅ Connected! Start speaking...';
+
+            } catch (error) {
+                console.error('Error connecting:', error);
+                statusDiv.className = 'status error';
+                statusDiv.textContent = '❌ Error: ' + error.message;
+                btn.disabled = false;
+            }
+        }
+
+        function handleTrackSubscribed(track, publication, participant) {
+            console.log('Track subscribed:', track.kind);
+            
+            if (track.kind === 'audio') {
+                const audioElement = track.attach();
+                audioElement.autoplay = true;
+                document.getElementById('audioContainer').appendChild(audioElement);
+            }
+        }
+
+        function handleDisconnect() {
+            connected = false;
+            const btn = document.getElementById('connectBtn');
+            const statusDiv = document.getElementById('status');
+            btn.textContent = 'Connect & Talk';
+            statusDiv.innerHTML = '';
+        }
+
+        async function getToken() {
+            // Generate a random room name
+            const roomName = 'rahul-' + Math.random().toString(36).substring(7);
+            
+            // You need to generate a token from your server
+            // For testing, you can use the LiveKit CLI or create a simple token endpoint
+            
+            // This is a placeholder - you'll need to implement token generation
+            const response = await fetch('http://localhost:3000/token?room=' + roomName);
+            const data = await response.json();
+            return data.token;
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,5 @@
+riverwood/
+.env
+__pycache__/
+*.log
+
