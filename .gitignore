@@ -1,5 +1,6 @@
 # Environment variables and API keys
 .env
+.env.*
 .env.local
 .env.*.local
 *.key
@@ -39,6 +40,10 @@ venv/
 ENV/
 env/
 .venv
+**/venv/
+**/ENV/
+**/env/
+**/.venv/
 pyvenv.cfg
 
 # IDE
@@ -65,7 +70,10 @@ Thumbs.db
 
 # Testing
 .coverage
+.coverage.*
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
 htmlcov/
 
 # Project specific
@@ -74,3 +82,4 @@ Lib/
 Scripts/
 Include/
 bin/
+**/.git/
